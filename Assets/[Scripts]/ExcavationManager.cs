@@ -54,7 +54,7 @@ public class ExcavationManager : MonoBehaviour
         scansLeft = scanAttempts;
         ScanUsed.Invoke(scansLeft);
 
-        IsScanning = true;
+        IsScanning = false;
         ChangeMode.Invoke(IsScanning);
 
         // Reset Values of each tile, set new values

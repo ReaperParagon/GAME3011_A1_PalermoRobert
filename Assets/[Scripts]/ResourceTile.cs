@@ -105,6 +105,9 @@ public class ResourceTile : MonoBehaviour
         excavationManager.Extract(TileValue);
         SetResourceValue(ResourceValue.Min);
 
+        // Show the Tile that was extracted
+        UpdateTile();
+
         // Reduce resources of surrounding 24 tiles
         foreach (ResourceTile rTile in CloseTiles)
         {

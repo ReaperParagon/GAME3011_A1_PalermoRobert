@@ -92,6 +92,7 @@ MonoBehaviour:
   Tile: {fileID: 0}
   TileValue: 0
   GridPosition: {x: 0, y: 0}
+  HiddenColour: {r: 0.4245283, g: 0.19931535, b: 0, a: 1}
   CloseTiles: []
   IsScanned: 0
 --- !u!114 &8975020312999619641

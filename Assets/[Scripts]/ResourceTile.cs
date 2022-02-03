@@ -15,14 +15,16 @@ public enum ResourceValue
 
 public class ResourceTile : MonoBehaviour
 {
-    [Header("TileInformation")]
+    [Header("Tile Information")]
     public GameObject Tile;
     public ResourceValue TileValue = ResourceValue.Min;
     public Vector2Int GridPosition = new Vector2Int(0, 0);
+    public Color HiddenColour = Color.grey;
 
     public List<ResourceTile> CloseTiles = new List<ResourceTile>();
 
     public bool IsScanned = false;
+    public bool Visited = false;
 
     public static ExcavationManager excavationManager;
 
@@ -41,6 +43,8 @@ public class ResourceTile : MonoBehaviour
     {
         TileValue = ResourceValue.Min;
         IsScanned = false;
+        Visited = false;
+        Tile.GetComponent<Image>().color = HiddenColour;
     }
 
     private void Awake()
@@ -64,9 +68,6 @@ public class ResourceTile : MonoBehaviour
     public void SetResourceValue(ResourceValue value)
     {
         TileValue = value;
-
-        // REMOVE, THIS IS FOR TESTING
-        UpdateTile();
     }
 
     public void OnClick()
@@ -82,19 +83,29 @@ public class ResourceTile : MonoBehaviour
     private void OnScan()
     {
         // Reveal this tile and the surrounding 8 tiles
+        IsScanned = true;
+        UpdateTile();
+
+        foreach (ResourceTile rTile in CloseTiles)
+        {
+            rTile.IsScanned = true;
+            rTile.UpdateTile();
+        }
     }
 
     private void OnExtract()
     {
-        if (TileValue == ResourceValue.Extracted)
-        {
-            // Print information that you cannot extract that tile
+        // Extract this tile's resources
+        excavationManager.Extract(TileValue);
+        SetResourceValue(ResourceValue.Min);
 
-            return;
+        // Reduce resources of surrounding 24 tiles
+        foreach (ResourceTile rTile in CloseTiles)
+        {
+            rTile.DegradeCloseTiles();
         }
 
-        // Extract this tile's resources
-        // Reduce resources of surrounding 24 tiles
+        excavationManager.ResetVisitedTiles();
     }
 
     public void UpdateTile()
@@ -117,10 +128,10 @@ public class ResourceTile : MonoBehaviour
                 tileColour = Color.white;
                 break;
             case ResourceValue.Extracted:
-                tileColour = Color.grey;
+                tileColour = Color.black;
                 break;
             default:
-                tileColour = Color.white;
+                tileColour = Color.grey;
                 break;
         }
 
@@ -138,14 +149,32 @@ public class ResourceTile : MonoBehaviour
             if (!lastPass)
                 rTile.SetSurroundingTileResourceValues(value + 1, roundUp);
 
-            // Check if we should increase or decrease the value of the tiles
-            bool changeValue = roundUp ? rTile.TileValue <= value : rTile.TileValue >= value;
-
-            if (changeValue)
+            // Check if we should change the value of this tile
+            if (rTile.TileValue >= value)
                 rTile.TileValue = value;
+        }
+    }
 
-            // REMOVE THIS AFTER TESTING, THIS WILL REVEAL ALL TILE VALUES
-            rTile.UpdateTile();
+    private void DegradeCloseTiles()
+    {
+        foreach (ResourceTile rTile in CloseTiles)
+        {
+            rTile.DegradeTile();
+        }
+    }
+
+    private void DegradeTile()
+    {
+        // Degrade value of this tile
+        if (!Visited)
+        {
+            Visited = true;
+
+            if (TileValue < ResourceValue.Min)
+                TileValue += 1;
+
+            if (IsScanned)
+                UpdateTile();
         }
     }
 }

@@ -66,8 +66,8 @@ public class ExcavationManager : MonoBehaviour
             GameObject tile = Instantiate(GridTilePrefab, GridArea.transform);
 
             // Store info based on all grid positions
-            int gridX = i / GridDimensions.x;
-            int gridY = i % GridDimensions.x;
+            int gridY = i / GridDimensions.x;
+            int gridX = i % GridDimensions.x;
 
             ResourceTile rTile = tile.GetComponent<ResourceTile>();
 
@@ -208,6 +208,17 @@ public class ExcavationManager : MonoBehaviour
         if (--extractionsLeft <= 0)
         {
             // Out of extractions, go to results
+        }
+    }
+
+    public void ResetVisitedTiles()
+    {
+        foreach (List<ResourceTile> row in GridTiles)
+        {
+            foreach (ResourceTile rTile in row)
+            {
+                rTile.Visited = false;
+            }
         }
     }
 }

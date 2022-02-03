@@ -81,6 +81,13 @@ public class ResourceTile : MonoBehaviour
 
     private void OnScan()
     {
+        // Check remaining scans
+        if (excavationManager.scansLeft <= 0)
+            return;
+
+        excavationManager.scansLeft--;
+        excavationManager.ScanUsed.Invoke(excavationManager.scansLeft);
+
         // Reveal this tile and the surrounding 8 tiles
         IsScanned = true;
         UpdateTile();

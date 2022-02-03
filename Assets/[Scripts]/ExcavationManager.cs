@@ -23,10 +23,10 @@ public class ExcavationManager : MonoBehaviour
     private GameObject GridTilePrefab;
     [SerializeField]
     private int extractionAttempts = 3;
-    private int extractionsLeft;
+    public int extractionsLeft;
     [SerializeField]
     private int scanAttempts = 6;
-    private int scansLeft;
+    public int scansLeft;
 
     [Header("Resource Information")]
     [SerializeField]
@@ -38,13 +38,24 @@ public class ExcavationManager : MonoBehaviour
     public bool IsScanning = true;
 
     public UnityEvent<int> ExtractedValueUpdated = new UnityEvent<int>();
+    public UnityEvent<int> FinishedExcavation = new UnityEvent<int>();
+    public UnityEvent<int> ScanUsed = new UnityEvent<int>();
+    public UnityEvent<int> ExtractUsed = new UnityEvent<int>();
+    public UnityEvent<bool> ChangeMode = new UnityEvent<bool>();
 
-    private void ResetValues()
+    public void ResetValues()
     {
         extractedValue = 0;
         ExtractedValueUpdated.Invoke(0);
+
         extractionsLeft = extractionAttempts;
+        ExtractUsed.Invoke(extractionsLeft);
+
         scansLeft = scanAttempts;
+        ScanUsed.Invoke(scansLeft);
+
+        IsScanning = true;
+        ChangeMode.Invoke(IsScanning);
 
         // Reset Values of each tile, set new values
         foreach (List<ResourceTile> row in GridTiles)
@@ -211,13 +222,16 @@ public class ExcavationManager : MonoBehaviour
         }
 
         extractedValue += valueGained;
+        extractionsLeft--;
 
         ExtractedValueUpdated.Invoke(valueGained);
+        ExtractUsed.Invoke(extractionsLeft);
 
         // Reduce Extractions, Check if out of extractions
-        if (--extractionsLeft <= 0)
+        if (extractionsLeft <= 0)
         {
             // Out of extractions, go to results
+            FinishedExcavation.Invoke(extractedValue);
         }
     }
 

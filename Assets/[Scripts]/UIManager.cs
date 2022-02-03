@@ -11,16 +11,25 @@ public class UIManager : MonoBehaviour
     GameObject StartButton;
     [SerializeField]
     GameObject ExcavationScreen;
+    [SerializeField]
+    GameObject ResultsScreen;
 
     public TextMeshProUGUI ScanToggleText;
     public TextMeshProUGUI ExtractedValueText;
     public TextMeshProUGUI DialogBox;
+    public TextMeshProUGUI ResultsText;
+    public TextMeshProUGUI ScansText;
+    public TextMeshProUGUI ExtractText;
 
     public ExcavationManager excManager;
 
     private void Awake()
     {
         excManager.ExtractedValueUpdated.AddListener(UpdateExtractedValueText);
+        excManager.FinishedExcavation.AddListener(ShowResults);
+        excManager.ChangeMode.AddListener(ChangeToMode);
+        excManager.ScanUsed.AddListener(SetScansLeft);
+        excManager.ExtractUsed.AddListener(SetExtractsLeft);
     }
 
     public void StartExcavation()
@@ -28,7 +37,7 @@ public class UIManager : MonoBehaviour
         StartButton.SetActive(false);
         ExcavationScreen.SetActive(true);
 
-        // TODO: Reset excavation screen
+        excManager.ResetValues();
     }
 
     public void FinishExcavation()
@@ -41,7 +50,12 @@ public class UIManager : MonoBehaviour
     {
         excManager.IsScanning = !excManager.IsScanning;
 
-        if (excManager.IsScanning)
+        ChangeToMode(excManager.IsScanning);
+    }
+
+    private void ChangeToMode(bool scanning)
+    {
+        if (scanning)
         {
             ScanToggleText.text = "Scan Mode";
             DialogBox.text = "Switched to Scan Mode!";
@@ -57,5 +71,21 @@ public class UIManager : MonoBehaviour
     {
         ExtractedValueText.text = excManager.extractedValue.ToString();
         DialogBox.text = "You obtained " + valueGained.ToString() + " Extractium Ore!";
+    }
+
+    private void ShowResults(int finalValue)
+    {
+        ResultsText.text = "You earned a grand total of " + finalValue.ToString() + " Extractium!";
+        ResultsScreen.SetActive(true);
+    }
+
+    private void SetScansLeft(int left)
+    {
+        ScansText.text = left.ToString();
+    }
+
+    private void SetExtractsLeft(int left)
+    {
+        ExtractText.text = left.ToString();
     }
 }

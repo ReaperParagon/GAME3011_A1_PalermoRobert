@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.Events;
 using UnityEngine.UI;
 
 public class ExcavationManager : MonoBehaviour
@@ -36,9 +37,12 @@ public class ExcavationManager : MonoBehaviour
 
     public bool IsScanning = true;
 
+    public UnityEvent<int> ExtractedValueUpdated = new UnityEvent<int>();
+
     private void ResetValues()
     {
         extractedValue = 0;
+        ExtractedValueUpdated.Invoke(0);
         extractionsLeft = extractionAttempts;
         scansLeft = scanAttempts;
 
@@ -185,24 +189,30 @@ public class ExcavationManager : MonoBehaviour
 
     public void Extract(ResourceValue value)
     {
+        int valueGained;
+
         switch (value)
         {
             case ResourceValue.Max:
-                extractedValue += maxResourceValue;
+                valueGained = maxResourceValue;
                 break;
             case ResourceValue.Half:
-                extractedValue += (int)(maxResourceValue * 0.5f);
+                valueGained = (int)(maxResourceValue * 0.5f);
                 break;
             case ResourceValue.Quarter:
-                extractedValue += (int)(maxResourceValue * 0.25f);
+                valueGained = (int)(maxResourceValue * 0.25f);
                 break;
             case ResourceValue.Min:
-                extractedValue += (int)(maxResourceValue * 0.125f);
+                valueGained = (int)(maxResourceValue * 0.125f);
                 break;
             default:
-                extractedValue += (int)(maxResourceValue * 0.125f);
+                valueGained = (int)(maxResourceValue * 0.125f);
                 break;
         }
+
+        extractedValue += valueGained;
+
+        ExtractedValueUpdated.Invoke(valueGained);
 
         // Reduce Extractions, Check if out of extractions
         if (--extractionsLeft <= 0)

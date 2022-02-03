@@ -10,7 +10,6 @@ public enum ResourceValue
     Half,
     Quarter,
     Min,
-    Extracted
 }
 
 public class ResourceTile : MonoBehaviour
@@ -126,9 +125,6 @@ public class ResourceTile : MonoBehaviour
                 break;
             case ResourceValue.Min:
                 tileColour = Color.white;
-                break;
-            case ResourceValue.Extracted:
-                tileColour = Color.black;
                 break;
             default:
                 tileColour = Color.grey;

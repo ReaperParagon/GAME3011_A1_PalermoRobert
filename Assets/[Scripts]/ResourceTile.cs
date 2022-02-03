@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public enum ResourceValue
 {
@@ -38,7 +39,6 @@ public class ResourceTile : MonoBehaviour
 
     public void ResetValues()
     {
-        CloseTiles.Clear();
         TileValue = ResourceValue.Min;
         IsScanned = false;
     }
@@ -64,6 +64,9 @@ public class ResourceTile : MonoBehaviour
     public void SetResourceValue(ResourceValue value)
     {
         TileValue = value;
+
+        // REMOVE, THIS IS FOR TESTING
+        UpdateTile();
     }
 
     public void OnClick()
@@ -121,7 +124,7 @@ public class ResourceTile : MonoBehaviour
                 break;
         }
 
-        Tile.GetComponent<SpriteRenderer>().color = tileColour;
+        Tile.GetComponent<Image>().color = tileColour;
     }
 
     public void SetSurroundingTileResourceValues(ResourceValue value, bool roundUp)

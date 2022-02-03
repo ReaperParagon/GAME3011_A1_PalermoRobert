@@ -16,7 +16,6 @@ public class ExcavationManager : MonoBehaviour
     private int GridCount { get { return GridDimensions.x * GridDimensions.y; } }
 
     private List<List<ResourceTile>> GridTiles = new List<List<ResourceTile>>();
-    // private ResourceTile[][] GridTiles;
 
     [Header("Grid Tile Information")]
     [SerializeField]
@@ -46,14 +45,17 @@ public class ExcavationManager : MonoBehaviour
         // Reset Values of each tile, set new values
         foreach (List<ResourceTile> row in GridTiles)
         {
-            row.Clear();
+            foreach (ResourceTile rTile in row)
+            {
+                rTile.ResetValues();
+            }
         }
+
+        PlaceResources();
     }
 
     private void Awake()
     {
-        ResetValues();
-
         // Setup Grid Layout
         gridLayout = GridArea.GetComponent<GridLayoutGroup>();
         gridLayout.constraintCount = GridDimensions.x;
@@ -66,8 +68,6 @@ public class ExcavationManager : MonoBehaviour
             // Store info based on all grid positions
             int gridX = i / GridDimensions.x;
             int gridY = i % GridDimensions.x;
-
-            Debug.Log(gridX + "   " + gridY);
 
             ResourceTile rTile = tile.GetComponent<ResourceTile>();
 
@@ -83,6 +83,82 @@ public class ExcavationManager : MonoBehaviour
 
             GridTiles[gridX][gridY] = rTile;
         }
+
+        foreach (List<ResourceTile> row in GridTiles)
+        {
+            foreach (ResourceTile rTile in row)
+            {
+                // Set up neighbouring tiles
+                rTile.CloseTiles.AddRange(GetCloseTiles(rTile.GridPosition));
+            }
+        }
+
+        ResetValues();
+    }
+
+    private List<ResourceTile> GetCloseTiles(Vector2Int gridPosition)
+    {
+        List<ResourceTile> rTileList = new List<ResourceTile>();
+
+        int x = gridPosition.x;
+        int y = gridPosition.y;
+
+        int gridRight = GridTiles.Count - 1;
+
+        // Left
+        if (x - 1 >= 0)
+        {
+            rTileList.Add(GetResourceTileAtPosition(x - 1, y));
+
+            // Top Left
+            if (y > 0)
+            {
+                rTileList.Add(GetResourceTileAtPosition(x - 1, y - 1));
+            }
+
+            // Bottom Left
+            if (y < GridTiles[0].Count - 1)
+            {
+                rTileList.Add(GetResourceTileAtPosition(x - 1, y + 1));
+            }
+        }
+
+        // Right
+        if (x + 1 <= gridRight)
+        {
+            rTileList.Add(GetResourceTileAtPosition(x + 1, y));
+
+            // Top Right
+            if (y > 0)
+            {
+                rTileList.Add(GetResourceTileAtPosition(x + 1, y - 1));
+            }
+
+            // Bottom Right
+            if (y < GridTiles[0].Count - 1)
+            {
+                rTileList.Add(GetResourceTileAtPosition(x + 1, y + 1));
+            }
+        }
+
+        // Top
+        if (y > 0)
+        {
+            rTileList.Add(GetResourceTileAtPosition(x, y - 1));
+        }
+
+        // Bottom
+        if (y < GridTiles[0].Count - 1)
+        {
+            rTileList.Add(GetResourceTileAtPosition(x, y + 1));
+        }
+
+        return rTileList;
+    }
+
+    private ResourceTile GetResourceTileAtPosition(int x, int y)
+    {
+        return GridTiles[x][y];
     }
 
     public void PlaceResources()
@@ -94,6 +170,13 @@ public class ExcavationManager : MonoBehaviour
 
             // Place resources in pattern from this tile
             ResourceTile rTile = GridTiles[randX][randY];
+
+            // Check if that square is a max resource, if it is then try another tile
+            if (rTile.TileValue == ResourceValue.Max)
+            {
+                i--;
+                continue;
+            }
 
             rTile.SetResourceValue(ResourceValue.Max);
             rTile.SetSurroundingTileResourceValues(ResourceValue.Half, false);

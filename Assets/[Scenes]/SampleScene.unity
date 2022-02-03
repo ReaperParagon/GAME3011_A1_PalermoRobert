@@ -172,6 +172,9 @@ MonoBehaviour:
   extractionAttempts: 3
   scanAttempts: 6
   numMaxResourceTiles: 40
+  maxResourceValue: 2000
+  extractedValue: 0
+  IsScanning: 1
 --- !u!1 &519420028
 GameObject:
   m_ObjectHideFlags: 0

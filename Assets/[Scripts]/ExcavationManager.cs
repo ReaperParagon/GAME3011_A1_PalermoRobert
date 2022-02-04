@@ -1,7 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.EventSystems;
 using UnityEngine.Events;
 using UnityEngine.UI;
 
@@ -10,12 +9,9 @@ public class ExcavationManager : MonoBehaviour
     [Header("Grid Information")]
     [SerializeField]
     private GameObject GridArea;
-    private GridLayoutGroup gridLayout;
-
     [SerializeField]
     private Vector2Int GridDimensions;
     private int GridCount { get { return GridDimensions.x * GridDimensions.y; } }
-
     private List<List<ResourceTile>> GridTiles = new List<List<ResourceTile>>();
 
     [Header("Grid Tile Information")]
@@ -23,24 +19,25 @@ public class ExcavationManager : MonoBehaviour
     private GameObject GridTilePrefab;
     [SerializeField]
     private int extractionAttempts = 3;
-    public int extractionsLeft;
     [SerializeField]
     private int scanAttempts = 6;
-    public int scansLeft;
+
+    public int extractionsLeft { private set; get; }
+    public int scansLeft { private set; get; }
 
     [Header("Resource Information")]
     [SerializeField]
     private int numMaxResourceTiles = 40;
     [SerializeField]
     private int maxResourceValue = 2000;
-    public int extractedValue = 0;
+    public int extractedValue { private set; get; }
 
     public bool IsScanning = true;
 
     public UnityEvent<int> ExtractedValueUpdated = new UnityEvent<int>();
     public UnityEvent<int> FinishedExcavation = new UnityEvent<int>();
     public UnityEvent<int> ScanUsed = new UnityEvent<int>();
-    public UnityEvent<int> ExtractUsed = new UnityEvent<int>();
+    public UnityEvent<int, int> ExtractUsed = new UnityEvent<int, int>();   // Extractions left, value gained
     public UnityEvent<bool> ChangeMode = new UnityEvent<bool>();
 
     public void ResetValues()
@@ -49,7 +46,7 @@ public class ExcavationManager : MonoBehaviour
         ExtractedValueUpdated.Invoke(0);
 
         extractionsLeft = extractionAttempts;
-        ExtractUsed.Invoke(extractionsLeft);
+        ExtractUsed.Invoke(extractionsLeft, 0);
 
         scansLeft = scanAttempts;
         ScanUsed.Invoke(scansLeft);
@@ -72,7 +69,7 @@ public class ExcavationManager : MonoBehaviour
     private void Awake()
     {
         // Setup Grid Layout
-        gridLayout = GridArea.GetComponent<GridLayoutGroup>();
+        GridLayoutGroup gridLayout = GridArea.GetComponent<GridLayoutGroup>();
         gridLayout.constraintCount = GridDimensions.x;
 
         for (int i = 0; i < GridCount; i++)
@@ -118,8 +115,6 @@ public class ExcavationManager : MonoBehaviour
         int x = gridPosition.x;
         int y = gridPosition.y;
 
-        int gridRight = GridTiles.Count - 1;
-
         // Left
         if (x - 1 >= 0)
         {
@@ -127,46 +122,34 @@ public class ExcavationManager : MonoBehaviour
 
             // Top Left
             if (y > 0)
-            {
                 rTileList.Add(GetResourceTileAtPosition(x - 1, y - 1));
-            }
 
             // Bottom Left
             if (y < GridTiles[0].Count - 1)
-            {
                 rTileList.Add(GetResourceTileAtPosition(x - 1, y + 1));
-            }
         }
 
         // Right
-        if (x + 1 <= gridRight)
+        if (x + 1 <= GridTiles.Count - 1)
         {
             rTileList.Add(GetResourceTileAtPosition(x + 1, y));
 
             // Top Right
             if (y > 0)
-            {
                 rTileList.Add(GetResourceTileAtPosition(x + 1, y - 1));
-            }
 
             // Bottom Right
             if (y < GridTiles[0].Count - 1)
-            {
                 rTileList.Add(GetResourceTileAtPosition(x + 1, y + 1));
-            }
         }
 
         // Top
         if (y > 0)
-        {
             rTileList.Add(GetResourceTileAtPosition(x, y - 1));
-        }
 
         // Bottom
         if (y < GridTiles[0].Count - 1)
-        {
             rTileList.Add(GetResourceTileAtPosition(x, y + 1));
-        }
 
         return rTileList;
     }
@@ -193,9 +176,14 @@ public class ExcavationManager : MonoBehaviour
                 continue;
             }
 
-            rTile.SetResourceValue(ResourceValue.Max);
-            rTile.SetSurroundingTileResourceValues(ResourceValue.Half, false);
+            rTile.SpawnTileResource();
         }
+    }
+
+    public void Scan()
+    {
+        scansLeft--;
+        ScanUsed.Invoke(scansLeft);
     }
 
     public void Extract(ResourceValue value)
@@ -224,8 +212,8 @@ public class ExcavationManager : MonoBehaviour
         extractedValue += valueGained;
         extractionsLeft--;
 
-        ExtractedValueUpdated.Invoke(valueGained);
-        ExtractUsed.Invoke(extractionsLeft);
+        ExtractedValueUpdated.Invoke(extractedValue);
+        ExtractUsed.Invoke(extractionsLeft, valueGained);
 
         // Reduce Extractions, Check if out of extractions
         if (extractionsLeft <= 0)

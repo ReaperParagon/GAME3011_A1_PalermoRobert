@@ -15,28 +15,17 @@ public enum ResourceValue
 public class ResourceTile : MonoBehaviour
 {
     [Header("Tile Information")]
-    public GameObject Tile;
-    public ResourceValue TileValue = ResourceValue.Min;
-    public Vector2Int GridPosition = new Vector2Int(0, 0);
-    public Color HiddenColour = Color.grey;
-
-    public List<ResourceTile> CloseTiles = new List<ResourceTile>();
-
-    public bool IsScanned = false;
+    [SerializeField]
+    private Color HiddenColour = Color.grey;
+    private bool IsScanned = false;
     public bool Visited = false;
 
+    private GameObject Tile;
+    public ResourceValue TileValue { private set; get; }
+    public Vector2Int GridPosition { private set; get; }
+
+    public List<ResourceTile> CloseTiles = new List<ResourceTile>();
     public static ExcavationManager excavationManager;
-
-    public ExcavationManager ExcavationManager
-    {
-        get
-        {
-            if (excavationManager == null)
-                excavationManager = FindObjectOfType<ExcavationManager>();
-
-            return excavationManager;
-        }
-    }
 
     public void ResetValues()
     {
@@ -49,9 +38,7 @@ public class ResourceTile : MonoBehaviour
     private void Awake()
     {
         if (excavationManager == null)
-            return;
-
-        excavationManager = FindObjectOfType<ExcavationManager>();
+            excavationManager = FindObjectOfType<ExcavationManager>();
     }
 
     public void SetTile(GameObject tile)
@@ -71,9 +58,7 @@ public class ResourceTile : MonoBehaviour
 
     public void OnClick()
     {
-        bool isScanning = ExcavationManager.IsScanning;
-
-        if (isScanning)
+        if (excavationManager.IsScanning)
             OnScan();
         else
             OnExtract();
@@ -85,8 +70,7 @@ public class ResourceTile : MonoBehaviour
         if (excavationManager.scansLeft <= 0)
             return;
 
-        excavationManager.scansLeft--;
-        excavationManager.ScanUsed.Invoke(excavationManager.scansLeft);
+        excavationManager.Scan();
 
         // Reveal this tile and the surrounding 8 tiles
         IsScanned = true;
@@ -102,6 +86,9 @@ public class ResourceTile : MonoBehaviour
     private void OnExtract()
     {
         // Extract this tile's resources
+        if (excavationManager.extractionsLeft <= 0)
+            return;
+
         excavationManager.Extract(TileValue);
         SetResourceValue(ResourceValue.Min);
 
@@ -144,7 +131,13 @@ public class ResourceTile : MonoBehaviour
         Tile.GetComponent<Image>().color = tileColour;
     }
 
-    public void SetSurroundingTileResourceValues(ResourceValue value, bool roundUp)
+    public void SpawnTileResource()
+    {
+        SetResourceValue(ResourceValue.Max);
+        SetSurroundingTileResourceValues(ResourceValue.Half);
+    }
+
+    private void SetSurroundingTileResourceValues(ResourceValue value)
     {
         bool lastPass = (value == ResourceValue.Min);
 
@@ -153,7 +146,7 @@ public class ResourceTile : MonoBehaviour
         {
             // If not on the last pass, also set values for other surrounding tiles
             if (!lastPass)
-                rTile.SetSurroundingTileResourceValues(value + 1, roundUp);
+                rTile.SetSurroundingTileResourceValues(value + 1);
 
             // Check if we should change the value of this tile
             if (rTile.TileValue >= value)

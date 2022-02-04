@@ -7,6 +7,7 @@ using TMPro;
 
 public class UIManager : MonoBehaviour
 {
+    [Header("UI Screens / Buttons")]
     [SerializeField]
     GameObject StartButton;
     [SerializeField]
@@ -14,17 +15,29 @@ public class UIManager : MonoBehaviour
     [SerializeField]
     GameObject ResultsScreen;
 
-    public TextMeshProUGUI ScanToggleText;
-    public TextMeshProUGUI ExtractedValueText;
-    public TextMeshProUGUI DialogBox;
-    public TextMeshProUGUI ResultsText;
-    public TextMeshProUGUI ScansText;
-    public TextMeshProUGUI ExtractText;
+    [Header("UI Texts")]
+    [SerializeField]
+    private TextMeshProUGUI ScanToggleText;
+    [SerializeField]
+    private TextMeshProUGUI ExtractedValueText;
+    [SerializeField]
+    private TextMeshProUGUI DialogBox;
+    [SerializeField]
+    private TextMeshProUGUI ResultsText;
+    [SerializeField]
+    private TextMeshProUGUI ScansText;
+    [SerializeField]
+    private TextMeshProUGUI ExtractText;
 
-    public ExcavationManager excManager;
+    [Header("Excavation Manager")]
+    [SerializeField]
+    private ExcavationManager excManager;
 
     private void Awake()
     {
+        if (excManager == null)
+            excManager = FindObjectOfType<ExcavationManager>();
+
         excManager.ExtractedValueUpdated.AddListener(UpdateExtractedValueText);
         excManager.FinishedExcavation.AddListener(ShowResults);
         excManager.ChangeMode.AddListener(ChangeToMode);
@@ -67,25 +80,26 @@ public class UIManager : MonoBehaviour
         }
     }
 
-    private void UpdateExtractedValueText(int valueGained)
+    private void UpdateExtractedValueText(int totalValue)
     {
-        ExtractedValueText.text = excManager.extractedValue.ToString();
-        DialogBox.text = "You obtained " + valueGained.ToString() + " Extractium Ore!";
+        ExtractedValueText.text = totalValue.ToString();
     }
 
     private void ShowResults(int finalValue)
     {
-        ResultsText.text = "You earned a grand total of " + finalValue.ToString() + " Extractium!";
+        ResultsText.text = "You earned a grand total of " + finalValue.ToString() + " Extractium Ore!";
         ResultsScreen.SetActive(true);
     }
 
     private void SetScansLeft(int left)
     {
         ScansText.text = left.ToString();
+        DialogBox.text = "You have " + left.ToString() + " Scans remaining!";
     }
 
-    private void SetExtractsLeft(int left)
+    private void SetExtractsLeft(int left, int valueGained)
     {
         ExtractText.text = left.ToString();
+        DialogBox.text = "You obtained " + valueGained.ToString() + " Extractium Ore! " + left.ToString() + " Extractions remaining!";
     }
 }
